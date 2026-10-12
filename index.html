@@ -1210,6 +1210,35 @@ p,li,dd,.eventdetail dd{text-align:justify !important; text-justify:inter-word; 
 .leader__text:last-child{margin-bottom:0;}
 @media (max-width:900px){ .leaders__grid{grid-template-columns:1fr;} }
 @media (max-width:520px){ .leader__head{flex-direction:column; align-items:flex-start;} }
+
+/* ---------- Registration ticket ---------- */
+.tkt-ov{position:fixed;inset:0;z-index:99999;background:rgba(3,7,24,.88);display:flex;align-items:flex-start;justify-content:center;padding:18px 14px;overflow:auto;-webkit-overflow-scrolling:touch}
+.tkt-wrap{width:100%;max-width:400px;margin:auto}
+.tkt{background:linear-gradient(165deg,#0a1640 0%,#060d2e 100%);border:1px solid rgba(217,184,102,.6);border-radius:18px;color:#fff;font-family:'Inter',-apple-system,sans-serif;overflow:hidden;box-shadow:0 24px 60px -12px rgba(0,0,0,.7)}
+.tkt__head{padding:22px 22px 16px;text-align:center;border-bottom:1px dashed rgba(217,184,102,.55)}
+.tkt__brand{font-family:'Fraunces',Georgia,serif;font-size:1.9rem;letter-spacing:.14em;color:#ecd490;font-weight:700}
+.tkt__sub{font-family:'Space Mono',ui-monospace,monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-top:4px}
+.tkt__badge{display:inline-block;margin-top:12px;padding:5px 12px;border:1px solid #d9b866;border-radius:99px;font-family:'Space Mono',ui-monospace,monospace;font-size:.66rem;letter-spacing:.08em;color:#ecd490}
+.tkt__body{padding:18px 22px}
+.tkt__row{margin-bottom:13px}
+.tkt__k{font-family:'Space Mono',ui-monospace,monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#d9b866}
+.tkt__v{font-size:.98rem;line-height:1.35;margin-top:2px;word-break:break-word}
+.tkt__v--big{font-family:'Fraunces',Georgia,serif;font-size:1.35rem}
+.tkt__grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.tkt__foot{padding:16px 22px 20px;border-top:1px dashed rgba(217,184,102,.55);text-align:center}
+.tkt__id{font-family:'Space Mono',ui-monospace,monospace;font-size:1.25rem;letter-spacing:.1em;color:#ecd490;margin-top:3px;word-break:break-all}
+.tkt__note{font-size:.72rem;opacity:.8;margin-top:10px;line-height:1.4}
+.tkt__btns{display:flex;gap:10px;margin-top:14px}
+.tkt__btns button{flex:1;padding:13px 10px;border-radius:10px;font-weight:600;font-size:.95rem;cursor:pointer;font-family:inherit}
+.tkt__dl{background:#d9b866;color:#060d2e;border:0}
+.tkt__cl{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)}
+
+/* ---------- Per-event participant lists ---------- */
+.pe__intro{font-size:.88rem;line-height:1.45;color:#fff;opacity:.9;margin:0 0 .9rem}
+.pe__block{border:1px solid rgba(217,184,102,.45);border-radius:12px;padding:.9rem 1rem 1rem;margin:0 0 1rem;min-width:0}
+.pe__block legend{padding:0 .5rem;font-family:'Fraunces',Georgia,serif;font-size:1.05rem;color:#ecd490}
+.pe__block .field{margin-bottom:.8rem}
+.pe__block .field:last-child{margin-bottom:0}
 </style>
 </head>
 <body>
@@ -2454,6 +2483,7 @@ p,li,dd,.eventdetail dd{text-align:justify !important; text-justify:inter-word; 
       <label class="field">Team members <small>(names)</small>
         <textarea name="members" rows="3" placeholder="List your team members' names, one per line"></textarea>
       </label>
+      <div class="full" id="perEventBox" style="display:none"></div>
 
       <div class="paybox full is-locked" id="payBox">
         <span class="eventsel__title" style="margin:0">Payment</span>
@@ -3294,6 +3324,91 @@ var OCEANICA_REG = { endpoint: 'https://script.google.com/macros/s/AKfycbz4EkZOQ
   function fee(name){ for (var i=0;i<EVENTS.length;i++) if (EVENTS[i][0]===name) return EVENTS[i][1]; return 0; }
   function total(){ return selected.reduce(function(t,n){ return t + fee(n); }, 0); }
 
+
+  /* ---------- Ticket shown after a successful registration ---------- */
+  function showTicket(d, id, per){
+    var old = document.getElementById('tktOv'); if (old) old.remove();
+    var tid = id || 'PENDING';
+    var evs = per ? per.map(function(e){ return e.team ? e.event + ' \u2014 ' + e.team : e.event; }) : String(d.events||'').split(', ').filter(Boolean);
+    var ov = document.createElement('div'); ov.className='tkt-ov'; ov.id='tktOv';
+    var wrap = document.createElement('div'); wrap.className='tkt-wrap'; ov.appendChild(wrap);
+    var t = document.createElement('div'); t.className='tkt'; wrap.appendChild(t);
+    function el(tag, cls, text, parent){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; (parent||t).appendChild(e); return e; }
+    function row(k, v, big, parent){ var r=el('div','tkt__row',null,parent); el('div','tkt__k',k,r); el('div','tkt__v'+(big?' tkt__v--big':''),v,r); return r; }
+    var h = el('div','tkt__head'); el('div','tkt__brand','OCEANICA',h); el('div','tkt__sub','Maritime Management Fest \u00B7 2026',h); el('div','tkt__badge','REGISTRATION RECEIVED',h);
+    var b = el('div','tkt__body');
+    row('Participant', d.name, true, b);
+    var g = el('div','tkt__grid',null,b);
+    row('Date','12 Nov 2026, Thu',false,g); row('Venue','IMU Kochi Campus',false,g);
+    row('College', d.college, false, b);
+    if (d.course) row('Course & year', d.course, false, b);
+    row('Events', evs.join('\n'), false, b).lastChild.style.whiteSpace='pre-line';
+    if (d.team && !per) row('Team', d.team, false, b);
+    var g2 = el('div','tkt__grid',null,b);
+    row('Amount paid', d.amount, false, g2); row('UTR', d.utr, false, g2);
+    var f = el('div','tkt__foot'); el('div','tkt__k','Registration ID',f); el('div','tkt__id',tid,f);
+    el('div','tkt__note','Your entry is confirmed once the organisers verify your payment. Keep this ticket (download or screenshot) and show it at the registration desk.',f);
+    var bt = el('div','tkt__btns',null,f);
+    var dl = el('button','tkt__dl','Download ticket',bt); dl.type='button';
+    var cl = el('button','tkt__cl','Close',bt); cl.type='button';
+    cl.onclick = function(){ ov.remove(); document.removeEventListener('keydown', esc); };
+    function esc(e){ if(e.key==='Escape') cl.onclick(); }
+    document.addEventListener('keydown', esc);
+    dl.onclick = function(){ downloadTicket(per ? Object.assign({}, d, { team: '' }) : d, tid, evs); };
+    document.body.appendChild(ov);
+  }
+  function downloadTicket(d, tid, evs){
+    var W=1080, P=80, gold='#d9b866', gl='#ecd490';
+    function wrapText(c, text, maxW){
+      var out=[]; String(text).split('\n').forEach(function(par){
+        var words=par.split(' '), line='';
+        words.forEach(function(w){ var tt=line?line+' '+w:w; if(c.measureText(tt).width>maxW && line){ out.push(line); line=w; } else line=tt; });
+        out.push(line);
+      }); return out;
+    }
+    function paint(c, H){
+      var g=c.createLinearGradient(0,0,W,H||3000); g.addColorStop(0,'#0a1640'); g.addColorStop(1,'#060d2e');
+      c.fillStyle=g; c.fillRect(0,0,W,H||3000);
+      c.strokeStyle=gold; c.lineWidth=4; c.strokeRect(24,24,W-48,(H||3000)-48);
+      var y=150; c.textAlign='center';
+      c.fillStyle=gl; c.font='700 96px Fraunces, Georgia, serif'; c.fillText('OCEANICA',W/2,y);
+      y+=56; c.fillStyle='#fff'; c.font='400 30px "Space Mono", monospace'; c.fillText('MARITIME MANAGEMENT FEST \u00B7 2026',W/2,y);
+      y+=70; c.fillStyle=gold; c.font='700 30px "Space Mono", monospace'; c.fillText('REGISTRATION RECEIVED',W/2,y);
+      y+=50; c.setLineDash([14,10]); c.beginPath(); c.moveTo(P,y); c.lineTo(W-P,y); c.stroke(); c.setLineDash([]);
+      c.textAlign='left'; y+=30;
+      function field(k, v, size){
+        y+=44; c.fillStyle=gold; c.font='400 26px "Space Mono", monospace'; c.fillText(k.toUpperCase(),P,y);
+        c.fillStyle='#fff'; c.font=(size>46?'700 ':'400 ')+size+'px '+(size>46?'Fraunces, Georgia, serif':'Inter, Arial, sans-serif');
+        wrapText(c, v, W-2*P).forEach(function(l){ y+=size*1.3; c.fillText(l,P,y); }); y+=18;
+      }
+      field('Participant', d.name, 56);
+      field('Date & venue', '12 November 2026, Thursday\nIMU Kochi Campus', 38);
+      field('College', d.college, 38);
+      if (d.course) field('Course & year', d.course, 38);
+      field('Events', evs.join('\n'), 38);
+      if (d.team) field('Team', d.team, 38);
+      field('Amount paid', d.amount, 38);
+      field('UTR', d.utr, 38);
+      y+=24; c.setLineDash([14,10]); c.beginPath(); c.moveTo(P,y); c.lineTo(W-P,y); c.stroke(); c.setLineDash([]);
+      c.textAlign='center'; y+=64; c.fillStyle=gold; c.font='400 26px "Space Mono", monospace'; c.fillText('REGISTRATION ID',W/2,y);
+      y+=64; c.fillStyle=gl; c.font='700 56px "Space Mono", monospace'; c.fillText(tid,W/2,y);
+      y+=58; c.fillStyle='#fff'; c.globalAlpha=.8; c.font='400 26px Inter, Arial, sans-serif';
+      wrapText(c,'Entry is confirmed once the organisers verify your payment. Show this ticket at the registration desk.',W-2*P-20).forEach(function(l){ c.fillText(l,W/2,y); y+=36; });
+      c.globalAlpha=1; return y+50;
+    }
+    var tmp=document.createElement('canvas'); tmp.width=W; tmp.height=10;
+    var H=paint(tmp.getContext('2d'), null);
+    var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    paint(cv.getContext('2d'), H);
+    cv.toBlob(function(blob){
+      if(!blob) return;
+      var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download='OCEANICA-ticket-'+String(tid).replace(/[^A-Za-z0-9_-]/g,'')+'.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    }, 'image/png');
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('regForm'); if (!form) return;
     var btn = document.getElementById('eventDropBtn'), panel = document.getElementById('eventDropPanel');
@@ -3324,6 +3439,37 @@ var OCEANICA_REG = { endpoint: 'https://script.google.com/macros/s/AKfycbz4EkZOQ
     document.addEventListener('click', function(e){ if (!e.target.closest('#eventDrop')) closePanel(); });
     document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closePanel(); });
 
+    var perEvent = {};
+    var singleTeam = form.elements.team.closest('label'), singleMembers = form.elements.members.closest('label');
+    var peBox = document.getElementById('perEventBox');
+    function buildPerEvent(){
+      var multi = selected.length >= 2;
+      singleTeam.style.display = multi ? 'none' : '';
+      singleMembers.style.display = multi ? 'none' : '';
+      peBox.style.display = multi ? '' : 'none';
+      peBox.innerHTML = '';
+      if (!selected.length) perEvent = {};
+      if (!multi) return;
+      var intro = document.createElement('p'); intro.className = 'pe__intro';
+      intro.textContent = 'You selected more than one event. Enter the team name and participant names separately for each event.';
+      peBox.appendChild(intro);
+      selected.forEach(function(name){
+        var st = perEvent[name] || (perEvent[name] = { team: '', members: '' });
+        var fs = document.createElement('fieldset'); fs.className = 'pe__block';
+        var lg = document.createElement('legend'); lg.textContent = name; fs.appendChild(lg);
+        var l1 = document.createElement('label'); l1.className = 'field';
+        l1.appendChild(document.createTextNode('Team name '));
+        var s1 = document.createElement('small'); s1.textContent = '(team events)'; l1.appendChild(s1);
+        var i1 = document.createElement('input'); i1.type = 'text'; i1.placeholder = 'Optional for individual events'; i1.value = st.team;
+        i1.addEventListener('input', function(){ st.team = i1.value; }); l1.appendChild(i1); fs.appendChild(l1);
+        var l2 = document.createElement('label'); l2.className = 'field';
+        l2.appendChild(document.createTextNode('Participants for ' + name + ' '));
+        var s2 = document.createElement('small'); s2.textContent = '(names)'; l2.appendChild(s2);
+        var t2 = document.createElement('textarea'); t2.rows = 3; t2.placeholder = "List the participants' names for this event, one per line"; t2.value = st.members;
+        t2.addEventListener('input', function(){ st.members = t2.value; }); l2.appendChild(t2); fs.appendChild(l2);
+        peBox.appendChild(fs);
+      });
+    }
     function render(){
       list.innerHTML = '';
       selected.forEach(function(name){
@@ -3338,6 +3484,7 @@ var OCEANICA_REG = { endpoint: 'https://script.google.com/macros/s/AKfycbz4EkZOQ
       label.textContent = selected.length ? 'Add another event' : 'Select an event';
       document.getElementById('eventSelTotal').textContent = inr(total());
       document.getElementById('payAmt').textContent = inr(total());
+      buildPerEvent();
       updatePay(); validate();
     }
     function add(name){ if (selected.indexOf(name) === -1) { selected.push(name); render(); } }
@@ -3382,22 +3529,34 @@ var OCEANICA_REG = { endpoint: 'https://script.google.com/macros/s/AKfycbz4EkZOQ
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!valid()) { say(detailsOk() ? HINT_PAY : HINT_DETAILS, true); return; }
+      var perList = null;
+      if (selected.length >= 2) {
+        perList = selected.map(function(n){
+          var st = perEvent[n] || {};
+          var m = String(st.members || '').split('\n').map(function(x){ return x.trim(); }).filter(Boolean);
+          return { event: n, fee: fee(n), team: String(st.team || '').trim(), members: m };
+        });
+      }
       var data = {
         name: val('name'), email: val('email'), phone: val('phone'), college: val('college'), course: val('course'),
         events: selected.join(', '), amount: inr(total()), utr: val('utr'),
-        team: val('team'), members: val('members'), notes: val('notes')
+        team: perList ? perList.map(function(e){ return e.event + ': ' + (e.team || '-'); }).join(' | ') : val('team'),
+        members: perList ? perList.map(function(e){ return e.event + ': ' + (e.members.join(', ') || '-'); }).join('\n') : val('members'),
+        notes: val('notes')
       };
+      if (perList) data.eventDetails = JSON.stringify(perList);
       if (OCEANICA_REG.endpoint) {
         submit.disabled = true; say('Submitting...', false);
         var token = 'oc' + Date.now() + Math.random().toString(36).slice(2);
         var q = new URLSearchParams();
-        Object.keys(data).forEach(function(k){ q.append(k, String(data[k]).slice(0, 600)); });
+        Object.keys(data).forEach(function(k){ q.append(k, String(data[k]).slice(0, k === 'eventDetails' ? 2500 : (k === 'team' || k === 'members') ? 1500 : 600)); });
         q.append('token', token);
         var url = OCEANICA_REG.endpoint + '?' + q.toString();
         function fail(msg){ say(msg, true); submit.disabled = false; }
         function saved(id){
           form.reset(); selected = []; render(); status.dataset.done = '1';
           say('Thank you, ' + data.name + '! Your registration' + (id ? ' (ID: ' + id + ')' : '') + ' is received. It will be confirmed once the organisers verify your payment.', false);
+          showTicket(data, id, perList);
         }
         /* credentials:'omit' = send no Google login, so it works the same for everyone */
         fetch(url, { method: 'GET', credentials: 'omit', redirect: 'follow' })
@@ -3413,6 +3572,7 @@ var OCEANICA_REG = { endpoint: 'https://script.google.com/macros/s/AKfycbz4EkZOQ
               .then(function(){
                 form.reset(); selected = []; render(); status.dataset.done = '1';
                 say('Thank you, ' + data.name + '! Your registration was submitted, but we could not show a confirmation ID here. Please keep your payment UTR (' + data.utr + '). If you do not hear from us within a day, contact oceanica478@gmail.com.', false);
+                showTicket(data, '', perList);
               })
               .catch(function(){ fail('We could not reach the registration server. Please check your connection and try again, or contact oceanica478@gmail.com.'); });
           });
